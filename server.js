@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -8,6 +9,7 @@ const User = require('./models/User'); // Import User model
 const Event = require('./models/Event'); // Import Event model
 const Contact = require('./models/Contact'); // Import Contact model
 const Registration = require('./models/Registration'); // Import Registration model
+// const mongoURI = process.env.MONGODB_URI;
 
 const app = express();
 const port = 5001;
@@ -17,13 +19,14 @@ app.use(cors());
 app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// Connect to MongoDB database
+const mongoURI = process.env.MONGODB_URI || 'mongodb://localhost:27017/virtual-event';
+
 const connectDB = async () => {
     try {
-        await mongoose.connect('mongodb://localhost:27017/virtual-event');
-        console.log('Connected to virtual-event MongoDB');
+        await mongoose.connect(mongoURI);
+        console.log('Connected to MongoDB');
     } catch (error) {
-        console.error('Error connecting to virtual-event MongoDB:', error);
+        console.error('Error connecting to MongoDB:', error);
         process.exit(1);
     }
 };
