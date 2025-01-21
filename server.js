@@ -19,34 +19,37 @@ app.use(cors());
 app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// MongoDB URI for the primary database
-const mongoURI = process.env.MONGODB_URI || 'mongodb://localhost:27017/virtual-event';
 
-// MongoDB URI for the secondary database (contact-form)
-const contactFormURI = process.env.MONGODB_CONTACT_URI || 'mongodb://localhost:27017/contact-form';
 
-// Function to connect to the main MongoDB database
+// MongoDB URI for the main database (virtual-event) in Atlas
+const mongoURI = process.env.MONGODB_URI || 'mongodb+srv://Madhumita:rmkrmadhu@cluster0.mongodb.net/virtual-event?retryWrites=true&w=majority';
+
+// MongoDB URI for the secondary database (contact-form) in Atlas
+const contactFormURI = process.env.MONGODB_CONTACT_URI || 'mongodb+srv://Madhumita:rmkrmadhu@cluster0.mongodb.net/virtual-event?retryWrites=true&w=majority';
+
+// Function to connect to the main MongoDB database (virtual-event)
 const connectDB = async () => {
     try {
         await mongoose.connect(mongoURI);
-        console.log('Connected to MongoDB');
+        console.log('Connected to MongoDB (virtual-event)');
     } catch (error) {
-        console.error('Error connecting to MongoDB:', error);
+        console.error('Error connecting to MongoDB (virtual-event):', error);
         process.exit(1);
     }
 };
 
-// Create a connection for the secondary MongoDB database
-const contactDb = mongoose.createConnection(contactFormURI);
+// // Create a connection for the secondary MongoDB database (contact-form)
+// const contactDb = mongoose.createConnection(contactFormURI);
 
-contactDb.on('connected', () => console.log('Connected to contact-form MongoDB'));
-contactDb.on('error', (error) => {
-    console.error('Error connecting to contact-form MongoDB:', error);
-    process.exit(1);
-});
+// contactDb.on('connected', () => console.log('Connected to contact-form MongoDB'));
+// contactDb.on('error', (error) => {
+//     console.error('Error connecting to contact-form MongoDB:', error);
+//     process.exit(1);
+// });
 
 // Call the main MongoDB connection
 connectDB();
+
 
 
 // User Registration Route
