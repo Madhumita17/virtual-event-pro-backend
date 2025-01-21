@@ -9,25 +9,21 @@ const User = require('./models/User'); // Import User model
 const Event = require('./models/Event'); // Import Event model
 const Contact = require('./models/Contact'); // Import Contact model
 const Registration = require('./models/Registration'); // Import Registration model
-// const mongoURI = process.env.MONGODB_URI;
 
 const app = express();
-const port = 5001;
+const port = process.env.PORT || 5001;
 
 // Middleware
 app.use(cors());
 app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
+app.use(cors({ origin: 'https://madhurmkr.netlify.app' }));
 
-
-// MongoDB URI for the main database (virtual-event) in Atlas
+// MongoDB URI for the "virtual-event" database
 const mongoURI = process.env.MONGODB_URI || 'mongodb+srv://Madhumita:rmkrmadhu@cluster0.mongodb.net/virtual-event?retryWrites=true&w=majority';
 
-// MongoDB URI for the secondary database (contact-form) in Atlas
-const contactFormURI = process.env.MONGODB_CONTACT_URI || 'mongodb+srv://Madhumita:rmkrmadhu@cluster0.mongodb.net/virtual-event?retryWrites=true&w=majority';
-
-// Function to connect to the main MongoDB database (virtual-event)
+// Function to connect to MongoDB
 const connectDB = async () => {
     try {
         await mongoose.connect(mongoURI);
@@ -38,19 +34,39 @@ const connectDB = async () => {
     }
 };
 
-// // Create a connection for the secondary MongoDB database (contact-form)
-// const contactDb = mongoose.createConnection(contactFormURI);
-
-// contactDb.on('connected', () => console.log('Connected to contact-form MongoDB'));
-// contactDb.on('error', (error) => {
-//     console.error('Error connecting to contact-form MongoDB:', error);
-//     process.exit(1);
-// });
-
-// Call the main MongoDB connection
+// Call the MongoDB connection
 connectDB();
 
+// Route to handle contact form submissions
+app.post('/api/contact', async (req, res) => {
+    try {
+        const { name, email, message } = req.body;
 
+        // Validate input
+        if (!name || !email || !message) {
+            return res.status(400).json({ message: 'All fields are required' });
+        }
+
+        // Save contact form submission
+        const newContact = new Contact({ name, email, message });
+        await newContact.save();
+        res.status(201).json({ message: 'Contact form submitted successfully' });
+    } catch (error) {
+        console.error('Error submitting contact form:', error.message);
+        res.status(500).json({ message: 'Error submitting contact form' });
+    }
+});
+
+// Route: Get all Contact form submissions (Admin only)
+app.get('/api/admin/contacts', async (req, res) => {
+    try {
+        const contacts = await Contact.find();
+        res.status(200).json(contacts);
+    } catch (error) {
+        console.error('Error fetching contact form submissions:', error.message);
+        res.status(500).json({ message: 'Error fetching contact form submissions' });
+    }
+});
 
 // User Registration Route
 app.post('/api/register', async (req, res) => {
