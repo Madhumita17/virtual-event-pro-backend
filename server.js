@@ -3,8 +3,6 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const bodyParser = require('body-parser');
-const bcrypt = require('bcryptjs');
-const { body, validationResult } = require('express-validator');
 const User = require('./models/User'); // Import User model
 const Event = require('./models/Event'); // Import Event model
 const Contact = require('./models/Contact'); // Import Contact model
@@ -84,11 +82,8 @@ app.post('/api/register', async (req, res) => {
             return res.status(400).json({ message: 'User already exists' });
         }
 
-        // Hash the password
-        const hashedPassword = await bcrypt.hash(password, 10);
-
-        // Save new user
-        const newUser = new User({ name, email, password: hashedPassword, event });
+        // Save new user with plain text password
+        const newUser = new User({ name, email, password, event });
         await newUser.save();
         res.status(201).json({ message: 'User registered successfully', user: newUser });
     } catch (error) {
@@ -97,6 +92,7 @@ app.post('/api/register', async (req, res) => {
     }
 });
 
+// User Login Route
 // User Login Route
 app.post('/api/login', async (req, res) => {
     try {
@@ -109,22 +105,27 @@ app.post('/api/login', async (req, res) => {
 
         // Find user by email
         const user = await User.findOne({ email });
+
         if (!user) {
+            console.log(`User with email ${email} not found`);
             return res.status(404).json({ message: 'User not found' });
         }
 
-        // Compare passwords
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) {
+        console.log(`User found: ${user.email}, password: ${user.password}`);
+        
+        // Compare the entered password with the stored plain text password
+        if (password !== user.password) {
+            console.log('Entered password does not match stored password');
             return res.status(400).json({ message: 'Invalid credentials' });
         }
 
         res.status(200).json({ message: 'Login successful', user });
     } catch (error) {
-        console.error('Error logging in:', error);
+        console.error('Error logging in:', error); // Log the error details
         res.status(500).json({ message: 'Error logging in' });
     }
 });
+
 
 // Event Creation Route (Admin only)
 app.post('/api/admin/events', async (req, res) => {
@@ -171,42 +172,14 @@ app.get('/api/admin/events', async (req, res) => {
 });
 
 // Get all registrations for admin
-app.get('/api/admin/registrations', async (req, res) => {
+app.get('/api/admin/register', async (req, res) => {
     try {
+        console.log('Fetching registrations...');
         const registrations = await Registration.find();
         res.status(200).json(registrations);
     } catch (error) {
         console.error('Error fetching registrations:', error);
         res.status(500).json({ message: 'Error fetching registrations' });
-    }
-});
-
-// Update an existing event (Admin only)
-app.put('/api/admin/events/:id', async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { name, description, date, location } = req.body;
-
-        // Validate input
-        if (!name || !description || !date || !location) {
-            return res.status(400).json({ message: 'All fields are required' });
-        }
-
-        // Update event
-        const updatedEvent = await Event.findByIdAndUpdate(
-            id,
-            { name, description, date, location },
-            { new: true }
-        );
-
-        if (!updatedEvent) {
-            return res.status(404).json({ message: 'Event not found' });
-        }
-
-        res.status(200).json({ message: 'Event updated successfully', event: updatedEvent });
-    } catch (error) {
-        console.error('Error updating event:', error);
-        res.status(500).json({ message: 'Error updating event' });
     }
 });
 
@@ -226,18 +199,6 @@ app.delete('/api/admin/events/:id', async (req, res) => {
     } catch (error) {
         console.error('Error deleting event:', error);
         res.status(500).json({ message: 'Error deleting event' });
-    }
-});
-
-// Get registrations for a specific event (Admin only)
-app.get('/api/admin/event-registrations/:eventId', async (req, res) => {
-    try {
-        const { eventId } = req.params;
-        const registrations = await Registration.find({ event: eventId });
-        res.status(200).json(registrations);
-    } catch (error) {
-        console.error('Error fetching event registrations:', error);
-        res.status(500).json({ message: 'Error fetching event registrations' });
     }
 });
 
